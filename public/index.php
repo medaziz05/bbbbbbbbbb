@@ -1,6 +1,6 @@
 <?php
 /**
- * Fichier principal - index.php
+ * Fichier principal - index.php - VERSION CORRIGÉE FINALE
  */
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -27,6 +27,7 @@ if (empty($path)) {
     } else {
         redirect('/auth/login');
     }
+    exit;
 }
 
 // Analyser la route
@@ -35,50 +36,85 @@ $controller = $segments[0] ?? 'dashboard';
 $action = $segments[1] ?? 'index';
 $param = $segments[2] ?? null;
 
-// Routes spéciales
-$routes = [
-    // Authentification
-    'auth/login' => ['AuthController', 'login'],
-    'auth/authenticate' => ['AuthController', 'authenticate'],
-    'auth/logout' => ['AuthController', 'logout'],
-    
-    // Dashboard
-    'dashboard' => ['DashboardController', 'index'],
-    
-    // Utilisateurs (Admin seulement)
-    'utilisateurs' => ['UtilisateurController', 'index'],
-    'utilisateurs/create' => ['UtilisateurController', 'create'],
-    'utilisateurs/store' => ['UtilisateurController', 'store'],
-    
-    // Thématiques (Admin seulement)
-    'thematiques' => ['ThematiqueController', 'index'],
-    'thematiques/create' => ['ThematiqueController', 'create'],
-    'thematiques/store' => ['ThematiqueController', 'store'],
-    
-    // Idées
-    'idees' => ['IdeeController', 'index'],
-    'idees/create' => ['IdeeController', 'create'],
-    'idees/store' => ['IdeeController', 'store'],
-    
-    // Évaluations
-    'evaluations' => ['EvaluationController', 'index'],
-    'evaluations/to-evaluate' => ['EvaluationController', 'toEvaluate'],
-    'evaluations/store' => ['EvaluationController', 'store'],
-    
-    // API
-    'api/stats' => ['ApiController', 'stats'],
-    'api/change-statut' => ['ApiController', 'changeStatut'],
-    'api/search-idees' => ['ApiController', 'searchIdees'],
-    'api/validate-email' => ['ApiController', 'validateEmail']
-];
-
-// Construire la route complète
-$fullRoute = $controller;
-if ($action !== 'index') {
-    $fullRoute .= '/' . $action;
-}
-
 try {
+    // GESTION SPÉCIALE DES ROUTES D'ÉVALUATION AVANT TOUT
+    if ($controller === 'evaluations') {
+        $evalController = new EvaluationController();
+        
+        switch ($action) {
+            case 'index':
+                $evalController->index();
+                exit;
+                
+            case 'to-evaluate':
+                $evalController->toEvaluate();
+                exit;
+                
+            case 'create':
+                if ($param && is_numeric($param)) {
+                    $evalController->create($param);
+                } else {
+                    throw new Exception("ID d'idée requis pour créer une évaluation");
+                }
+                exit;
+                
+            case 'store':
+                $evalController->store();
+                exit;
+                
+            case 'edit':
+                if ($param && is_numeric($param)) {
+                    $evalController->edit($param);
+                } else {
+                    throw new Exception("ID d'idée requis pour modifier une évaluation");
+                }
+                exit;
+                
+            default:
+                throw new Exception("Action d'évaluation non trouvée: $action");
+        }
+    }
+    
+    // Routes spéciales pour les autres contrôleurs
+    $routes = [
+        // Authentification
+        'auth/login' => ['AuthController', 'login'],
+        'auth/authenticate' => ['AuthController', 'authenticate'],
+        'auth/logout' => ['AuthController', 'logout'],
+        
+        // Dashboard
+        'dashboard' => ['DashboardController', 'index'],
+        
+        // Utilisateurs (Admin seulement)
+        'utilisateurs' => ['UtilisateurController', 'index'],
+        'utilisateurs/create' => ['UtilisateurController', 'create'],
+        'utilisateurs/store' => ['UtilisateurController', 'store'],
+        
+        // Thématiques (Admin seulement)
+        'thematiques' => ['ThematiqueController', 'index'],
+        'thematiques/create' => ['ThematiqueController', 'create'],
+        'thematiques/store' => ['ThematiqueController', 'store'],
+     
+        // Idées
+        'idees' => ['IdeeController', 'index'],
+        'idees/create' => ['IdeeController', 'create'],
+        'idees/store' => ['IdeeController', 'store'],
+        
+        // API
+        'api/stats' => ['ApiController', 'stats'],
+        'api/change-statut' => ['ApiController', 'changeStatut'],
+        'api/search-idees' => ['ApiController', 'searchIdees'],
+        'api/validate-email' => ['ApiController', 'validateEmail'],
+        'api/get-idee' => ['ApiController', 'getIdee'],
+        'api/get-evaluations' => ['ApiController', 'getEvaluations']
+    ];
+    
+    // Construire la route complète
+    $fullRoute = $controller;
+    if ($action !== 'index') {
+        $fullRoute .= '/' . $action;
+    }
+    
     // Vérifier si la route existe dans les routes spéciales
     if (isset($routes[$fullRoute])) {
         $controllerClass = $routes[$fullRoute][0];
@@ -149,11 +185,23 @@ try {
     }
     
 } catch (Exception $e) {
+    // Log de l'erreur pour debug
+    error_log("Erreur de routing: " . $e->getMessage() . " - Path: $path");
+    
     // Gestion des erreurs
     http_response_code(404);
     
+    // Affichage simple de l'erreur pour debug
     if (isLoggedIn()) {
-        require_once BASE_PATH . '/views/errors/404.php';
+        echo '<div style="padding: 20px; background: #f8f9fa; border: 1px solid #dee2e6; margin: 20px; border-radius: 8px;">';
+        echo '<h3 style="color: #dc3545;">Erreur de navigation</h3>';
+        echo '<p><strong>Message:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>';
+        echo '<p><strong>Chemin demandé:</strong> ' . htmlspecialchars($path) . '</p>';
+        echo '<p><strong>Contrôleur:</strong> ' . htmlspecialchars($controller) . '</p>';
+        echo '<p><strong>Action:</strong> ' . htmlspecialchars($action) . '</p>';
+        echo '<p><strong>Paramètre:</strong> ' . htmlspecialchars($param ?? 'aucun') . '</p>';
+        echo '<p><a href="' . BASE_URL . '/dashboard" style="color: #007bff;">← Retour au dashboard</a></p>';
+        echo '</div>';
     } else {
         redirect('/auth/login');
     }

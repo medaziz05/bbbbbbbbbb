@@ -1,6 +1,6 @@
 <?php
 /**
- * Contrôleur du tableau de bord
+ * Contrôleur du tableau de bord CORRIGÉ
  * controllers/DashboardController.php
  */
 
@@ -22,35 +22,33 @@ class DashboardController extends BaseController {
     }
     
     // Tableau de bord principal
-   public function index() {
-    $data = [
-        'title' => 'Tableau de bord'
-    ];
+    public function index() {
+        $data = [
+            'title' => 'Tableau de bord'
+        ];
 
-    $userRole = $_SESSION['user_role'];
-    $userId = $_SESSION['user_id'];
+        $userRole = $_SESSION['user_role'];
+        $userId = $_SESSION['user_id'];
 
-    switch ($userRole) {
-        case 'admin':
-            $data = array_merge($data, $this->getAdminStats());
-            $layout = 'admin_layout';
-            break;
-        case 'salarie':
-            $data = array_merge($data, $this->getSalarieStats($userId));
-            $layout = 'user_layout';
-            break;
-        case 'evaluateur':
-            $data = array_merge($data, $this->getEvaluateurStats($userId));
-            $layout = 'user_layout';
-            break;
-        default:
-            $layout = 'guest';
+        switch ($userRole) {
+            case 'admin':
+                $data = array_merge($data, $this->getAdminStats());
+                $layout = 'admin_layout';
+                break;
+            case 'salarie':
+                $data = array_merge($data, $this->getSalarieStats($userId));
+                $layout = 'user_layout';
+                break;
+            case 'evaluateur':
+                $data = array_merge($data, $this->getEvaluateurStats($userId));
+                $layout = 'user_layout';
+                break;
+            default:
+                $layout = 'user_layout';
+        }
+
+        $this->loadView('admin/dashboard', $data, $layout);
     }
-
-    $this->loadView('admin/dashboard', $data, $layout);
-    
-}
-
     
     private function getAdminStats() {
         try {

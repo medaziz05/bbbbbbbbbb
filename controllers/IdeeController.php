@@ -1,6 +1,6 @@
 <?php
 /**
- * Contrôleur des idées
+ * Contrôleur des idées CORRIGÉ
  * controllers/IdeeController.php
  */
 
@@ -28,22 +28,26 @@ class IdeeController extends BaseController {
         switch ($userRole) {
             case 'admin':
                 $idees = $this->ideeModel->findAllWithJoins();
+                $layout = 'admin_layout';
                 break;
             case 'salarie':
                 $idees = $this->ideeModel->findByUser($userId);
+                $layout = 'user_layout';
                 break;
             case 'evaluateur':
                 $idees = $this->ideeModel->findAllWithJoins();
+                $layout = 'user_layout';
                 break;
             default:
                 $idees = [];
+                $layout = 'user_layout';
         }
         
         $this->loadView('idees/index', [
             'title' => 'Gestion des idées',
             'idees' => $idees,
             'canCreate' => $userRole === 'salarie' || $userRole === 'admin'
-        ]);
+        ], $layout);
     }
     
     // Afficher une idée
@@ -73,32 +77,44 @@ class IdeeController extends BaseController {
             $evaluations = $this->evaluationModel->findByIdee($id);
         }
         
+        // Déterminer le layout
+        $layout = ($userRole === 'admin') ? 'admin_layout' : 'user_layout';
+        
         $this->loadView('idees/show', [
             'title' => 'Détail de l\'idée',
             'idee' => $idee,
             'evaluations' => $evaluations,
             'canEvaluate' => $canEvaluate,
             'canEdit' => $userRole === 'admin' || ($userRole === 'salarie' && $idee['utilisateur_id'] == $userId)
-        ]);
+        ], $layout);
     }
     
     // Afficher le formulaire de création
     public function create() {
-        $this->checkPermission('salarie');
+        // Vérifier les permissions
+        if (!($_SESSION['user_role'] === 'salarie' || $_SESSION['user_role'] === 'admin')) {
+            $this->redirectWithMessage('/dashboard', 'error', 'Accès non autorisé.');
+        }
         
         $thematiques = $this->thematiqueModel->findActive();
+        
+        // Déterminer le layout
+        $layout = ($_SESSION['user_role'] === 'admin') ? 'admin_layout' : 'user_layout';
         
         $this->loadView('idees/form', [
             'title' => 'Nouvelle idée',
             'action' => 'create',
             'idee' => null,
             'thematiques' => $thematiques
-        ]);
+        ], $layout);
     }
     
     // Traiter la création
     public function store() {
-        $this->checkPermission('salarie');
+        // Vérifier les permissions
+        if (!($_SESSION['user_role'] === 'salarie' || $_SESSION['user_role'] === 'admin')) {
+            $this->redirectWithMessage('/dashboard', 'error', 'Accès non autorisé.');
+        }
         
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             redirect('/idees');
@@ -115,13 +131,15 @@ class IdeeController extends BaseController {
         
         if (!empty($errors)) {
             $thematiques = $this->thematiqueModel->findActive();
+            $layout = ($_SESSION['user_role'] === 'admin') ? 'admin_layout' : 'user_layout';
+            
             $this->loadView('idees/form', [
                 'title' => 'Nouvelle idée',
                 'action' => 'create',
                 'idee' => $data,
                 'thematiques' => $thematiques,
                 'errors' => $errors
-            ]);
+            ], $layout);
             return;
         }
         
@@ -149,13 +167,14 @@ class IdeeController extends BaseController {
         }
         
         $thematiques = $this->thematiqueModel->findActive();
+        $layout = ($userRole === 'admin') ? 'admin_layout' : 'user_layout';
         
         $this->loadView('idees/form', [
             'title' => 'Modifier l\'idée',
             'action' => 'edit',
             'idee' => $idee,
             'thematiques' => $thematiques
-        ]);
+        ], $layout);
     }
     
     // Traiter la modification
@@ -193,13 +212,15 @@ class IdeeController extends BaseController {
         if (!empty($errors)) {
             $data['id'] = $id;
             $thematiques = $this->thematiqueModel->findActive();
+            $layout = ($userRole === 'admin') ? 'admin_layout' : 'user_layout';
+            
             $this->loadView('idees/form', [
                 'title' => 'Modifier l\'idée',
                 'action' => 'edit',
                 'idee' => $data,
                 'thematiques' => $thematiques,
                 'errors' => $errors
-            ]);
+            ], $layout);
             return;
         }
         
@@ -281,7 +302,7 @@ class IdeeController extends BaseController {
             'titre' => 'Titre',
             'description' => 'Description',
             'thematique_id' => 'Thématique'
-        ]);
+        ], $data);
         
         if ($data['thematique_id'] <= 0) {
             $errors[] = "Veuillez sélectionner une thématique valide.";

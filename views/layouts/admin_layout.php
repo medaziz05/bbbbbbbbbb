@@ -1,7 +1,7 @@
 <?php
 /**
  * Layout pour les administrateurs (Back Office)
- * views/layouts/admin.php
+ * views/layouts/admin_layout.php
  */
 ?>
 <!DOCTYPE html>
