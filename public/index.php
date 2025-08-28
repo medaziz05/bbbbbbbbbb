@@ -1,6 +1,6 @@
 <?php
 /**
- * Fichier principal - index.php - VERSION CORRIGÉE FINALE
+ * Fichier principal - index.php - VERSION CORRIGÉE POUR ÉVALUATIONS
  */
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -36,9 +36,14 @@ $controller = $segments[0] ?? 'dashboard';
 $action = $segments[1] ?? 'index';
 $param = $segments[2] ?? null;
 
+// Log pour debug
+error_log("ROUTING DEBUG - Path: $path, Controller: $controller, Action: $action, Param: " . ($param ?? 'null'));
+
 try {
-    // GESTION SPÉCIALE DES ROUTES D'ÉVALUATION AVANT TOUT
+    // GESTION SPÉCIALE DES ROUTES D'ÉVALUATION - CORRIGÉE
     if ($controller === 'evaluations') {
+        error_log("ROUTING - Gestion route évaluations: $action");
+        
         $evalController = new EvaluationController();
         
         switch ($action) {
@@ -54,7 +59,9 @@ try {
                 if ($param && is_numeric($param)) {
                     $evalController->create($param);
                 } else {
-                    throw new Exception("ID d'idée requis pour créer une évaluation");
+                    error_log("ROUTING ERROR - ID manquant pour create: $param");
+                    setFlashMessage('error', 'ID d\'idée requis pour créer une évaluation');
+                    redirect('/evaluations/to-evaluate');
                 }
                 exit;
                 
@@ -66,12 +73,16 @@ try {
                 if ($param && is_numeric($param)) {
                     $evalController->edit($param);
                 } else {
-                    throw new Exception("ID d'idée requis pour modifier une évaluation");
+                    error_log("ROUTING ERROR - ID manquant pour edit: $param");
+                    setFlashMessage('error', 'ID d\'idée requis pour modifier une évaluation');
+                    redirect('/evaluations');
                 }
                 exit;
                 
             default:
-                throw new Exception("Action d'évaluation non trouvée: $action");
+                error_log("ROUTING ERROR - Action d'évaluation inconnue: $action");
+                setFlashMessage('error', 'Page non trouvée');
+                redirect('/evaluations');
         }
     }
     
@@ -115,8 +126,11 @@ try {
         $fullRoute .= '/' . $action;
     }
     
+    error_log("ROUTING - Vérification route complète: $fullRoute");
+    
     // Vérifier si la route existe dans les routes spéciales
     if (isset($routes[$fullRoute])) {
+        error_log("ROUTING - Route spéciale trouvée: $fullRoute");
         $controllerClass = $routes[$fullRoute][0];
         $method = $routes[$fullRoute][1];
       
@@ -130,6 +144,7 @@ try {
     }
     // Routes avec paramètres dynamiques
     elseif (isset($routes[$controller])) {
+        error_log("ROUTING - Route de base trouvée: $controller");
         $controllerClass = $routes[$controller][0];
         $method = $routes[$controller][1];
         
@@ -148,9 +163,11 @@ try {
     }
     // Routes RESTful dynamiques
     else {
+        error_log("ROUTING - Tentative route RESTful: $controller -> $action");
         $controllerClass = ucfirst($controller) . 'Controller';
         
         if (class_exists($controllerClass)) {
+            error_log("ROUTING - Classe contrôleur trouvée: $controllerClass");
             $controllerInstance = new $controllerClass();
             
             switch ($action) {
@@ -161,6 +178,7 @@ try {
                     if ($param !== null) {
                         $controllerInstance->$action($param);
                     } else {
+                        error_log("ROUTING ERROR - ID requis pour $action");
                         throw new Exception("ID requis pour l'action $action");
                     }
                     break;
@@ -176,17 +194,19 @@ try {
                     if (is_numeric($action)) {
                         $controllerInstance->show($action);
                     } else {
+                        error_log("ROUTING ERROR - Action inconnue: $action");
                         throw new Exception("Action '$action' non trouvée");
                     }
             }
         } else {
+            error_log("ROUTING ERROR - Contrôleur non trouvé: $controllerClass");
             throw new Exception("Contrôleur '$controllerClass' non trouvé");
         }
     }
     
 } catch (Exception $e) {
     // Log de l'erreur pour debug
-    error_log("Erreur de routing: " . $e->getMessage() . " - Path: $path");
+    error_log("Erreur de routing: " . $e->getMessage() . " - Path: $path - Controller: $controller - Action: $action");
     
     // Gestion des erreurs
     http_response_code(404);
@@ -206,3 +226,4 @@ try {
         redirect('/auth/login');
     }
 }
+?>

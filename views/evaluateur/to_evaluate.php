@@ -1,6 +1,6 @@
 <?php
 /**
- * Vue liste des idées à évaluer
+ * Vue liste des idées à évaluer - CORRIGÉE
  * views/evaluations/to_evaluate.php
  */
 ?>
@@ -257,4 +257,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+.opacity-25 {
+    opacity: 0.25;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+</style>
 <?php endif; ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Vue formulaire d'évaluation
+ * Vue formulaire d'évaluation - CORRIGÉE
  * views/evaluations/form.php
  */
 ?>

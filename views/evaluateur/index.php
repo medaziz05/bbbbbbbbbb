@@ -1,6 +1,6 @@
 <?php
 /**
- * Vue liste des évaluations de l'évaluateur
+ * Vue liste des évaluations de l'évaluateur - CORRIGÉE
  * views/evaluations/index.php
  */
 ?>
@@ -339,4 +339,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.opacity-25 {
+    opacity: 0.25;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.border-3 {
+    border-width: 3px !important;
+}
+</style>
 <?php endif; ?>

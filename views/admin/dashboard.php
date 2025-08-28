@@ -1,113 +1,105 @@
 <?php
 /**
- * Vue du tableau de bord
- * views/dashboard/index.php
+ * Vue dashboard principal - VERSION FINALE COMPLÈTE
+ * views/admin/dashboard.php
  */
+
+$userRole = $_SESSION['user_role'] ?? '';
 ?>
+
 <div class="row mb-4">
-    <div class="col-12">
-        <h1 class="h3 mb-0">
+    <div class="col">
+        <h1 class="h2 mb-0">
             <i class="fas fa-tachometer-alt me-2"></i>
             Tableau de bord
+            <?php if ($userRole === 'admin'): ?>
+                <small class="text-muted">- Administrateur</small>
+            <?php elseif ($userRole === 'evaluateur'): ?>
+                <small class="text-muted">- Évaluateur</small>
+            <?php else: ?>
+                <small class="text-muted">- Salarié</small>
+            <?php endif; ?>
         </h1>
-        <p class="text-muted">Bienvenue, <?= e($_SESSION['user_name']) ?></p>
+        <p class="text-muted mb-0">
+            Bienvenue <?= e($_SESSION['user_prenom'] ?? '') ?> <?= e($_SESSION['user_nom'] ?? '') ?>
+        </p>
     </div>
 </div>
 
-<?php if ($_SESSION['user_role'] === 'admin'): ?>
-<!-- Statistiques Admin -->
+<?php if ($userRole === 'admin'): ?>
+<!-- Dashboard Administrateur -->
 <div class="row mb-4">
     <div class="col-md-3">
-        <div class="card stats-card">
+        <div class="card text-center">
             <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stats-icon me-3">
-                        <i class="fas fa-lightbulb"></i>
-                    </div>
-                    <div>
-                        <div class="h4 mb-1"><?= $stats['total'] ?? 0 ?></div>
-                        <div class="text-muted small">Idées totales</div>
-                    </div>
+                <div class="text-primary mb-2">
+                    <i class="fas fa-lightbulb fa-2x"></i>
                 </div>
+                <h3 class="mb-1"><?= $stats['total'] ?? 0 ?></h3>
+                <small class="text-muted">Idées soumises</small>
             </div>
         </div>
     </div>
-    
     <div class="col-md-3">
-        <div class="card stats-card">
+        <div class="card text-center">
             <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stats-icon me-3">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div>
-                        <div class="h4 mb-1"><?= $totalUsers ?? 0 ?></div>
-                        <div class="text-muted small">Utilisateurs actifs</div>
-                    </div>
+                <div class="text-success mb-2">
+                    <i class="fas fa-check-circle fa-2x"></i>
                 </div>
+                <h3 class="mb-1"><?= $stats['acceptees'] ?? 0 ?></h3>
+                <small class="text-muted">Idées acceptées</small>
             </div>
         </div>
     </div>
-    
     <div class="col-md-3">
-        <div class="card stats-card">
+        <div class="card text-center">
             <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stats-icon me-3">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div>
-                        <div class="h4 mb-1"><?= $stats['acceptees'] ?? 0 ?></div>
-                        <div class="text-muted small">Idées acceptées</div>
-                    </div>
+                <div class="text-info mb-2">
+                    <i class="fas fa-users fa-2x"></i>
                 </div>
+                <h3 class="mb-1"><?= $totalUsers ?? 0 ?></h3>
+                <small class="text-muted">Utilisateurs actifs</small>
             </div>
         </div>
     </div>
-    
     <div class="col-md-3">
-        <div class="card stats-card">
+        <div class="card text-center">
             <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="stats-icon me-3">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <div>
-                        <div class="h4 mb-1"><?= number_format($stats['note_moyenne_globale'] ?? 0, 1) ?>/20</div>
-                        <div class="text-muted small">Note moyenne</div>
-                    </div>
+                <div class="text-warning mb-2">
+                    <i class="fas fa-tags fa-2x"></i>
                 </div>
+                <h3 class="mb-1"><?= $totalThematiques ?? 0 ?></h3>
+                <small class="text-muted">Thématiques</small>
             </div>
         </div>
     </div>
 </div>
 
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-lg-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">Idées récentes</h5>
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Idées récentes
+                </h5>
             </div>
             <div class="card-body">
                 <?php if (!empty($recentIdees)): ?>
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-sm">
                         <thead>
                             <tr>
                                 <th>Titre</th>
                                 <th>Auteur</th>
                                 <th>Statut</th>
                                 <th>Date</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($recentIdees as $idee): ?>
                             <tr>
-                                <td>
-                                    <a href="<?= BASE_URL ?>/idees/<?= $idee['id'] ?>" class="text-decoration-none">
-                                        <?= e($idee['titre']) ?>
-                                    </a>
-                                </td>
+                                <td><?= e($idee['titre']) ?></td>
                                 <td><?= e($idee['utilisateur_prenom'] . ' ' . $idee['utilisateur_nom']) ?></td>
                                 <td>
                                     <span class="badge bg-<?= getStatutClass($idee['statut']) ?>">
@@ -115,81 +107,9 @@
                                     </span>
                                 </td>
                                 <td><?= formatDate($idee['date_creation']) ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <?php else: ?>
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
-                    <p>Aucune idée pour le moment</p>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Actions rapides</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="<?= BASE_URL ?>/utilisateurs" class="btn btn-outline-primary">
-                        <i class="fas fa-users me-2"></i>Gérer les utilisateurs
-                    </a>
-                    <a href="<?= BASE_URL ?>/thematiques" class="btn btn-outline-primary">
-                        <i class="fas fa-tags me-2"></i>Gérer les thématiques
-                    </a>
-                    <a href="<?= BASE_URL ?>/idees" class="btn btn-outline-primary">
-                        <i class="fas fa-lightbulb me-2"></i>Voir toutes les idées
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php elseif ($_SESSION['user_role'] === 'salarie'): ?>
-<!-- Dashboard Salarié -->
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Mes idées</h5>
-                <a href="<?= BASE_URL ?>/idees/create" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus me-2"></i>Nouvelle idée
-                </a>
-            </div>
-            <div class="card-body">
-                <?php if (!empty($mesIdees)): ?>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Titre</th>
-                                <th>Thématique</th>
-                                <th>Statut</th>
-                                <th>Note</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($mesIdees as $idee): ?>
-                            <tr>
-                                <td><?= e($idee['titre']) ?></td>
-                                <td><?= e($idee['thematique_nom']) ?></td>
-                                <td>
-                                    <span class="badge bg-<?= getStatutClass($idee['statut']) ?>">
-                                        <?= getStatutLabel($idee['statut']) ?>
-                                    </span>
-                                </td>
-                                <td><?= formatNote($idee['note_moyenne']) ?></td>
                                 <td>
                                     <a href="<?= BASE_URL ?>/idees/<?= $idee['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i>
+                                        Voir
                                     </a>
                                 </td>
                             </tr>
@@ -198,113 +118,318 @@
                     </table>
                 </div>
                 <?php else: ?>
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-lightbulb fa-3x mb-3 opacity-50"></i>
-                    <p>Vous n'avez pas encore proposé d'idées</p>
-                    <a href="<?= BASE_URL ?>/idees/create" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Proposer ma première idée
-                    </a>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Meilleures idées</h5>
-            </div>
-            <div class="card-body">
-                <?php if (!empty($meilleuresIdees)): ?>
-                <?php foreach (array_slice($meilleuresIdees, 0, 5) as $idee): ?>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div>
-                        <div class="fw-semibold small"><?= truncate($idee['titre'], 30) ?></div>
-                        <small class="text-muted"><?= e($idee['utilisateur_prenom'] . ' ' . $idee['utilisateur_nom']) ?></small>
-                    </div>
-                    <span class="badge bg-success"><?= formatNote($idee['note_moyenne']) ?></span>
-                </div>
-                <?php endforeach; ?>
-                <?php else: ?>
-                <div class="text-center text-muted py-3">
-                    <i class="fas fa-star opacity-50"></i>
-                    <p class="mb-0 small">Aucune idée évaluée</p>
-                </div>
+                <p class="text-muted">Aucune idée récente</p>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
-<?php elseif ($_SESSION['user_role'] === 'evaluateur'): ?>
-<!-- Dashboard Évaluateur - SECTION CORRIGÉE -->
+<?php elseif ($userRole === 'evaluateur'): ?>
+<!-- Dashboard Évaluateur - CORRIGÉ -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-star fa-2x"></i>
+                </div>
+                <h3 class="mb-1"><?= count($mesEvaluations ?? []) ?></h3>
+                <small class="text-muted">Mes évaluations</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-warning mb-2">
+                    <i class="fas fa-clipboard-check fa-2x"></i>
+                </div>
+                <h3 class="mb-1"><?= count($ideesAEvaluer ?? []) ?></h3>
+                <small class="text-muted">Idées à évaluer</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-success mb-2">
+                    <i class="fas fa-chart-line fa-2x"></i>
+                </div>
+                <h3 class="mb-1">
+                    <?php 
+                    $totalNotes = 0;
+                    $countNotes = 0;
+                    foreach ($mesEvaluations ?? [] as $eval) {
+                        if ($eval['note']) {
+                            $totalNotes += $eval['note'];
+                            $countNotes++;
+                        }
+                    }
+                    echo $countNotes > 0 ? number_format($totalNotes / $countNotes, 1) : '0';
+                    ?>/20
+                </h3>
+                <small class="text-muted">Note moyenne donnée</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides pour évaluateur -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="text-white">Évaluer des idées</h5>
+                        <p class="text-white-50 mb-0">
+                            <?= count($ideesAEvaluer ?? []) ?> idée<?= count($ideesAEvaluer ?? []) > 1 ? 's' : '' ?> en attente
+                        </p>
+                    </div>
+                    <div>
+                        <a href="<?= BASE_URL ?>/evaluations/to-evaluate" class="btn btn-light">
+                            <i class="fas fa-star me-2"></i>Évaluer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="text-white">Mes évaluations</h5>
+                        <p class="text-white-50 mb-0">
+                            Voir l'historique complet
+                        </p>
+                    </div>
+                    <div>
+                        <a href="<?= BASE_URL ?>/evaluations" class="btn btn-light">
+                            <i class="fas fa-list me-2"></i>Voir tout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
-    <div class="col-md-8">
+    <!-- Idées à évaluer -->
+    <div class="col-lg-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fas fa-clipboard-check me-2"></i>Idées à évaluer
                 </h5>
-                <a href="<?= BASE_URL ?>/evaluations/to-evaluate" class="btn btn-primary btn-sm">
-                    <i class="fas fa-list me-2"></i>Voir toutes
+                <?php if (!empty($ideesAEvaluer)): ?>
+                <a href="<?= BASE_URL ?>/evaluations/to-evaluate" class="btn btn-sm btn-outline-primary">
+                    Voir toutes
                 </a>
+                <?php endif; ?>
             </div>
             <div class="card-body">
                 <?php if (!empty($ideesAEvaluer)): ?>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Titre</th>
-                                <th>Auteur</th>
-                                <th>Thématique</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach (array_slice($ideesAEvaluer, 0, 10) as $idee): ?>
-                            <tr>
-                                <td>
-                                    <a href="<?= BASE_URL ?>/idees/<?= $idee['id'] ?>" class="text-decoration-none fw-semibold">
-                                        <?= e($idee['titre']) ?>
-                                    </a>
-                                </td>
-                                <td><?= e($idee['utilisateur_prenom'] . ' ' . $idee['utilisateur_nom']) ?></td>
-                                <td>
-                                    <span class="badge bg-secondary"><?= e($idee['thematique_nom']) ?></span>
-                                </td>
-                                <td><?= formatDate($idee['date_creation']) ?></td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="<?= BASE_URL ?>/idees/<?= $idee['id'] ?>" 
-                                           class="btn btn-outline-primary" title="Voir les détails">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="<?= BASE_URL ?>/evaluations/create/<?= $idee['id'] ?>" 
-                                           class="btn btn-success" title="Évaluer cette idée">
-                                            <i class="fas fa-star me-1"></i>Évaluer
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                <div class="list-group list-group-flush">
+                    <?php 
+                    $displayIdees = array_slice($ideesAEvaluer, 0, 3); // Afficher seulement 3 idées
+                    foreach ($displayIdees as $idee): 
+                    ?>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <h6 class="mb-1"><?= e($idee['titre']) ?></h6>
+                            <small class="text-muted">
+                                Par <?= e($idee['utilisateur_prenom'] . ' ' . $idee['utilisateur_nom']) ?>
+                                • <?= formatDate($idee['date_creation'], 'd/m/Y') ?>
+                            </small>
+                        </div>
+                        <div>
+                            <a href="<?= BASE_URL ?>/evaluations/create/<?= $idee['id'] ?>" 
+                               class="btn btn-sm btn-success" title="Évaluer">
+                                <i class="fas fa-star"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <?php if (count($ideesAEvaluer) > 3): ?>
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Et <?= count($ideesAEvaluer) - 3 ?> autre<?= count($ideesAEvaluer) - 3 > 1 ? 's' : '' ?> idée<?= count($ideesAEvaluer) - 3 > 1 ? 's' : '' ?>...
+                    </small>
+                </div>
+                <?php endif; ?>
+                
+                <?php else: ?>
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-clipboard-check fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune idée à évaluer pour le moment</p>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mes dernières évaluations -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-star me-2"></i>Mes dernières évaluations
+                </h5>
+                <?php if (!empty($mesEvaluations)): ?>
+                <a href="<?= BASE_URL ?>/evaluations" class="btn btn-sm btn-outline-primary">
+                    Voir toutes
+                </a>
+                <?php endif; ?>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($mesEvaluations)): ?>
+                <div class="list-group list-group-flush">
+                    <?php 
+                    $displayEvaluations = array_slice($mesEvaluations, 0, 3); // Afficher seulement 3 évaluations
+                    foreach ($displayEvaluations as $eval): 
+                    ?>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <h6 class="mb-1"><?= e($eval['idee_titre']) ?></h6>
+                            <small class="text-muted">
+                                Évaluée le <?= formatDate($eval['date_creation'], 'd/m/Y') ?>
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-<?php 
+                                $note = floatval($eval['note']);
+                                if ($note >= 15) echo 'success';
+                                elseif ($note >= 10) echo 'warning';
+                                else echo 'danger';
+                            ?>">
+                                <?= number_format($eval['note'], 1) ?>/20
+                            </span>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <?php if (count($mesEvaluations) > 3): ?>
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Et <?= count($mesEvaluations) - 3 ?> autre<?= count($mesEvaluations) - 3 > 1 ? 's' : '' ?> évaluation<?= count($mesEvaluations) - 3 > 1 ? 's' : '' ?>...
+                    </small>
+                </div>
+                <?php endif; ?>
+                
+                <?php else: ?>
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-star fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune évaluation effectuée</p>
+                    <a href="<?= BASE_URL ?>/evaluations/to-evaluate" class="btn btn-primary btn-sm">
+                        <i class="fas fa-star me-2"></i>Commencer à évaluer
+                    </a>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php else: ?>
+<!-- Dashboard Salarié -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-primary mb-2">
+                    <i class="fas fa-lightbulb fa-2x"></i>
+                </div>
+                <h3 class="mb-1"><?= count($mesIdees ?? []) ?></h3>
+                <small class="text-muted">Mes idées soumises</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-success mb-2">
+                    <i class="fas fa-trophy fa-2x"></i>
+                </div>
+                <h3 class="mb-1">
+                    <?php
+                    $acceptees = 0;
+                    foreach ($mesIdees ?? [] as $idee) {
+                        if ($idee['statut'] === 'acceptee') $acceptees++;
+                    }
+                    echo $acceptees;
+                    ?>
+                </h3>
+                <small class="text-muted">Idées acceptées</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="text-white">Soumettre une nouvelle idée</h5>
+                        <p class="text-white-50 mb-0">Partagez votre innovation avec l'équipe</p>
+                    </div>
+                    <div class="col-auto">
+                        <a href="<?= BASE_URL ?>/idees/create" class="btn btn-light btn-lg">
+                            <i class="fas fa-plus me-2"></i>Nouvelle idée
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Mes idées -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Mes idées récentes
+                </h5>
+            </div>
+            <div class="card-body">
+                <?php if (!empty($mesIdees)): ?>
+                <div class="list-group list-group-flush">
+                    <?php foreach (array_slice($mesIdees, 0, 5) as $idee): ?>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <h6 class="mb-1"><?= e($idee['titre']) ?></h6>
+                            <small class="text-muted">
+                                <?= formatDate($idee['date_creation'], 'd/m/Y') ?>
+                            </small>
+                        </div>
+                        <span class="badge bg-<?= getStatutClass($idee['statut']) ?>">
+                            <?= getStatutLabel($idee['statut']) ?>
+                        </span>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
                 <div class="text-center mt-3">
-                    <a href="<?= BASE_URL ?>/evaluations/to-evaluate" class="btn btn-outline-primary">
-                        <i class="fas fa-list me-2"></i>Voir toutes les idées à évaluer
+                    <a href="<?= BASE_URL ?>/idees" class="btn btn-outline-primary btn-sm">
+                        Voir toutes mes idées
                     </a>
                 </div>
                 <?php else: ?>
                 <div class="text-center text-muted py-4">
-                    <i class="fas fa-clipboard-check fa-3x mb-3 opacity-50"></i>
-                    <h5>Aucune idée à évaluer</h5>
-                    <p>Toutes les idées en évaluation ont été traitées.</p>
-                    <a href="<?= BASE_URL ?>/evaluations" class="btn btn-outline-primary">
-                        <i class="fas fa-star me-2"></i>Voir mes évaluations
+                    <i class="fas fa-lightbulb fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune idée soumise</p>
+                    <a href="<?= BASE_URL ?>/idees/create" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Première idée
                     </a>
                 </div>
                 <?php endif; ?>
@@ -312,75 +437,70 @@
         </div>
     </div>
     
-    <div class="col-md-4">
+    <!-- Meilleures idées -->
+    <div class="col-lg-6">
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <i class="fas fa-star me-2"></i>Mes dernières évaluations
+                    <i class="fas fa-trophy me-2"></i>Meilleures idées
                 </h5>
             </div>
             <div class="card-body">
-                <?php if (!empty($mesEvaluations)): ?>
+                <?php if (!empty($meilleuresIdees)): ?>
                 <div class="list-group list-group-flush">
-                    <?php foreach (array_slice($mesEvaluations, 0, 5) as $evaluation): ?>
-                    <div class="list-group-item border-0 px-0 py-2">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <a href="<?= BASE_URL ?>/idees/<?= $evaluation['idee_id'] ?? '#' ?>" 
-                                   class="fw-semibold text-decoration-none small">
-                                    <?= truncate($evaluation['idee_titre'] ?? 'Titre non disponible', 35) ?>
-                                </a>
-                                <div class="text-muted small mt-1">
-                                    <i class="fas fa-clock me-1"></i>
-                                    <?= formatDate($evaluation['date_creation']) ?>
-                                </div>
-                            </div>
-                            <span class="badge bg-primary ms-2">
-                                <?= number_format($evaluation['note'], 1) ?>/20
-                            </span>
+                    <?php foreach ($meilleuresIdees as $idee): ?>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <h6 class="mb-1"><?= e($idee['titre']) ?></h6>
+                            <small class="text-muted">
+                                Par <?= e($idee['utilisateur_prenom'] . ' ' . $idee['utilisateur_nom']) ?>
+                            </small>
                         </div>
+                        <span class="badge bg-warning">
+                            <?= formatNote($idee['note_moyenne']) ?>
+                        </span>
                     </div>
                     <?php endforeach; ?>
                 </div>
-                <div class="text-center mt-3 pt-2 border-top">
-                    <a href="<?= BASE_URL ?>/evaluations" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-list me-2"></i>Toutes mes évaluations
-                    </a>
-                </div>
                 <?php else: ?>
-                <div class="text-center text-muted py-3">
-                    <i class="fas fa-star fa-2x mb-2 opacity-50"></i>
-                    <p class="mb-2">Aucune évaluation effectuée</p>
-                    <a href="<?= BASE_URL ?>/evaluations/to-evaluate" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus me-2"></i>Commencer à évaluer
-                    </a>
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-trophy fa-3x mb-3 opacity-25"></i>
+                    <p>Aucune idée évaluée</p>
                 </div>
                 <?php endif; ?>
             </div>
         </div>
-        
-        <!-- Statistiques rapides -->
-        <div class="card mt-3">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>Mes statistiques
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <div class="border-end">
-                            <div class="h4 mb-0 text-primary"><?= count($mesEvaluations ?? []) ?></div>
-                            <small class="text-muted">Évaluations</small>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="h4 mb-0 text-warning"><?= count($ideesAEvaluer ?? []) ?></div>
-                        <small class="text-muted">En attente</small>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
+
 <?php endif; ?>
+
+<style>
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.opacity-25 {
+    opacity: 0.25;
+}
+</style>
