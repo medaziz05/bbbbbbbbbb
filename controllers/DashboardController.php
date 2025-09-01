@@ -93,31 +93,35 @@ class DashboardController extends BaseController {
     }
     
     private function getEvaluateurStats($userId) {
-        try {
-            $mesEvaluations = $this->evaluationModel->findByEvaluateur($userId);
-            $ideesAEvaluer = $this->ideeModel->findByStatut('en_evaluation');
-            
-            // Filtrer les idées déjà évaluées par cet utilisateur
-            $ideesAEvaluerFiltered = [];
-            if (!empty($ideesAEvaluer)) {
-                foreach ($ideesAEvaluer as $idee) {
-                    if (!$this->evaluationModel->hasEvaluated($idee['id'], $userId)) {
-                        $ideesAEvaluerFiltered[] = $idee;
-                    }
+    try {
+        $mesEvaluations = $this->evaluationModel->findByEvaluateur($userId);
+        
+        // CORRECTION: Récupérer les idées en attente ET en évaluation
+        $ideesEnAttente = $this->ideeModel->findByStatut('en_attente');
+        $ideesEnEvaluation = $this->ideeModel->findByStatut('en_evaluation');
+        $allIdees = array_merge($ideesEnAttente ?? [], $ideesEnEvaluation ?? []);
+        
+        // Filtrer les idées déjà évaluées par cet utilisateur
+        $ideesAEvaluerFiltered = [];
+        if (!empty($allIdees)) {
+            foreach ($allIdees as $idee) {
+                if (!$this->evaluationModel->hasEvaluated($idee['id'], $userId)) {
+                    $ideesAEvaluerFiltered[] = $idee;
                 }
             }
-            
-            return [
-                'mesEvaluations' => $mesEvaluations ?: [],
-                'ideesAEvaluer' => $ideesAEvaluerFiltered
-            ];
-        } catch (Exception $e) {
-            error_log("Erreur dans getEvaluateurStats: " . $e->getMessage());
-            return [
-                'mesEvaluations' => [],
-                'ideesAEvaluer' => []
-            ];
         }
+        
+        return [
+            'mesEvaluations' => $mesEvaluations ?: [],
+            'ideesAEvaluer' => $ideesAEvaluerFiltered
+        ];
+    } catch (Exception $e) {
+        error_log("Erreur dans getEvaluateurStats: " . $e->getMessage());
+        return [
+            'mesEvaluations' => [],
+            'ideesAEvaluer' => []
+        ];
     }
+}
 }
 ?>

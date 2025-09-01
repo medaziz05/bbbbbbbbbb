@@ -5,7 +5,7 @@
  */
 class AuthController extends BaseController {
     private $utilisateurModel;
-    
+
     public function __construct() {
         $this->utilisateurModel = new Utilisateur();
     }

@@ -81,8 +81,15 @@ class Evaluation extends BaseModel {
             }
             
             $stmt = $this->db->prepare($sql);
-            $result = $stmt->execute($data);
-            
+           $params = [
+    'idee_id' => $data['idee_id'],
+    'evaluateur_id' => $data['evaluateur_id'], 
+    'note' => $data['note'],
+    'commentaire' => $data['commentaire']
+];
+
+error_log("Evaluation - Paramètres pour execute: " . json_encode($params));
+$result = $stmt->execute($params);
             if ($result) {
                 error_log("Evaluation::createOrUpdate - Succès");
                 $this->updateIdeeNoyenneNote($data['idee_id']);

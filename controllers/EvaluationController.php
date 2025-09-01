@@ -49,29 +49,35 @@ class EvaluationController extends BaseController {
     
     // Idées à évaluer
     public function toEvaluate() {
-        error_log("EvaluationController::toEvaluate - Début");
-        $userId = $_SESSION['user_id'];
-        $allIdees = $this->ideeModel->findByStatut('en_evaluation');
-        
-        error_log("EvaluationController::toEvaluate - Idées en évaluation: " . count($allIdees ?? []));
-        
-        // Filtrer les idées non encore évaluées par cet évaluateur
-        $ideesAEvaluer = [];
-        if (!empty($allIdees)) {
-            foreach ($allIdees as $idee) {
-                if (!$this->evaluationModel->hasEvaluated($idee['id'], $userId)) {
-                    $ideesAEvaluer[] = $idee;
-                }
+    error_log("EvaluationController::toEvaluate - Début");
+    $userId = $_SESSION['user_id'];
+    
+    // CORRECTION: Récupérer les idées en attente ET en évaluation
+    $ideesEnAttente = $this->ideeModel->findByStatut('en_attente');
+    $ideesEnEvaluation = $this->ideeModel->findByStatut('en_evaluation');
+    
+    // Fusionner les deux tableaux
+    $allIdees = array_merge($ideesEnAttente ?? [], $ideesEnEvaluation ?? []);
+    
+    error_log("EvaluationController::toEvaluate - Idées trouvées: " . count($allIdees));
+    
+    // Filtrer les idées non encore évaluées par cet évaluateur
+    $ideesAEvaluer = [];
+    if (!empty($allIdees)) {
+        foreach ($allIdees as $idee) {
+            if (!$this->evaluationModel->hasEvaluated($idee['id'], $userId)) {
+                $ideesAEvaluer[] = $idee;
             }
         }
-        
-        error_log("EvaluationController::toEvaluate - Idées à évaluer: " . count($ideesAEvaluer));
-        
-        $this->loadView('evaluations/to_evaluate', [
-            'title' => 'Idées à évaluer',
-            'idees' => $ideesAEvaluer
-        ], 'user_layout');
     }
+    
+    error_log("EvaluationController::toEvaluate - Idées à évaluer: " . count($ideesAEvaluer));
+    
+    $this->loadView('evaluations/to_evaluate', [
+        'title' => 'Idées à évaluer',
+        'idees' => $ideesAEvaluer
+    ], 'user_layout');
+}
     
     // Afficher le formulaire d'évaluation
     public function create($ideeId) {

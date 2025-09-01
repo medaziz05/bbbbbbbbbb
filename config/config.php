@@ -137,10 +137,17 @@ function formatDate($date, $format = 'd/m/Y H:i') {
  * Formater une note
  */
 function formatNote($note) {
-    if ($note === null) return '-';
-    return number_format($note, 1) . '/20';
+    if ($note === null || $note === '') return '-';
+    
+    // DEBUG: Ajouter un log pour voir la valeur reçue
+    error_log("formatNote - Valeur reçue: " . var_export($note, true) . " (type: " . gettype($note) . ")");
+    
+    // S'assurer que c'est un nombre
+    $noteFloat = floatval($note);
+    error_log("formatNote - Valeur convertie: $noteFloat");
+    
+    return number_format($noteFloat, 1) . '/20';
 }
-
 /**
  * Obtenir le label d'un statut
  */
