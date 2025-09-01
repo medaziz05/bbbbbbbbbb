@@ -60,9 +60,32 @@ class Idee extends BaseModel {
     }
     
     // Obtenir les meilleures idées (avec note)
-    public function findBestIdees($limit = 10) {
-        return $this->findAllWithJoins('i.note_moyenne IS NOT NULL ORDER BY i.note_moyenne DESC, i.nombre_evaluations DESC LIMIT ' . intval($limit));
+    public function findBestIdees($limit = 10, $minNote = 15.0) {
+    try {
+        $sql = "SELECT i.*, 
+                       u.nom as utilisateur_nom, u.prenom as utilisateur_prenom,
+                       t.nom as thematique_nom
+                FROM {$this->table} i
+                LEFT JOIN utilisateurs u ON i.utilisateur_id = u.id
+                LEFT JOIN thematiques t ON i.thematique_id = t.id
+                WHERE i.note_moyenne IS NOT NULL 
+                  AND i.note_moyenne >= :min_note
+                  AND i.nombre_evaluations > 0
+                ORDER BY i.note_moyenne DESC, i.nombre_evaluations DESC 
+                LIMIT " . intval($limit);
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['min_note' => $minNote]);
+        $result = $stmt->fetchAll();
+        
+        error_log("findBestIdees - Trouvé " . count($result) . " idées avec note >= $minNote");
+        
+        return $result ?: [];
+    } catch (PDOException $e) {
+        error_log("Erreur findBestIdees: " . $e->getMessage());
+        return [];
     }
+}
     
     // Mettre à jour le statut
     public function updateStatut($id, $statut) {
@@ -83,5 +106,65 @@ class Idee extends BaseModel {
         $stmt->execute();
         return $stmt->fetch();
     }
+public function findIdeesByNoteRange($minNote, $maxNote = 20, $limit = 10) {
+    try {
+        $sql = "SELECT i.*, 
+                       u.nom as utilisateur_nom, u.prenom as utilisateur_prenom,
+                       t.nom as thematique_nom
+                FROM {$this->table} i
+                LEFT JOIN utilisateurs u ON i.utilisateur_id = u.id
+                LEFT JOIN thematiques t ON i.thematique_id = t.id
+                WHERE i.note_moyenne IS NOT NULL 
+                  AND i.note_moyenne >= :min_note 
+                  AND i.note_moyenne <= :max_note
+                  AND i.nombre_evaluations > 0
+                ORDER BY i.note_moyenne DESC, i.nombre_evaluations DESC 
+                LIMIT " . intval($limit);
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'min_note' => $minNote,
+            'max_note' => $maxNote
+        ]);
+        
+        return $stmt->fetchAll() ?: [];
+    } catch (PDOException $e) {
+        error_log("Erreur findIdeesByNoteRange: " . $e->getMessage());
+        return [];
+    }
+}
+public function findUserIdeasWithMinNote($userId, $minNote = 15.0) {
+    try {
+        $sql = "SELECT i.*, 
+                       u.nom as utilisateur_nom, u.prenom as utilisateur_prenom,
+                       t.nom as thematique_nom
+                FROM {$this->table} i
+                LEFT JOIN utilisateurs u ON i.utilisateur_id = u.id
+                LEFT JOIN thematiques t ON i.thematique_id = t.id
+                WHERE i.utilisateur_id = :user_id
+                  AND i.note_moyenne IS NOT NULL 
+                  AND i.note_moyenne >= :min_note
+                  AND i.nombre_evaluations > 0
+                ORDER BY i.note_moyenne DESC, i.date_creation DESC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'user_id' => $userId,
+            'min_note' => $minNote
+        ]);
+        
+        $result = $stmt->fetchAll();
+        error_log("findUserIdeasWithMinNote - User: $userId, Note min: $minNote, Résultats: " . count($result));
+        
+        return $result ?: [];
+    } catch (PDOException $e) {
+        error_log("Erreur findUserIdeasWithMinNote: " . $e->getMessage());
+        return [];
+    }
+}
+
+
+
+
 }
 ?>

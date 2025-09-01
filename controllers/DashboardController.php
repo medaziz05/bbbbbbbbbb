@@ -74,24 +74,31 @@ class DashboardController extends BaseController {
         }
     }
     
-    private function getSalarieStats($userId) {
-        try {
-            $mesIdees = $this->ideeModel->findByUser($userId);
-            $meilleuresIdees = $this->ideeModel->findBestIdees(5);
-            
-            return [
-                'mesIdees' => $mesIdees ?: [],
-                'meilleuresIdees' => $meilleuresIdees ?: []
-            ];
-        } catch (Exception $e) {
-            error_log("Erreur dans getSalarieStats: " . $e->getMessage());
-            return [
-                'mesIdees' => [],
-                'meilleuresIdees' => []
-            ];
-        }
+   private function getSalarieStats($userId) {
+    try {
+        $mesIdees = $this->ideeModel->findByUser($userId);
+        $meilleuresIdees = $this->ideeModel->findBestIdees(10, 15.0);
+        
+        // NOUVEAU: Calculer les idées "acceptées" (note >= 15) pour ce salarié
+        $mesIdeesSuperieures15 = $this->ideeModel->findUserIdeasWithMinNote($userId, 15.0);
+        
+        error_log("getSalarieStats - Idées du salarié avec note >= 15: " . count($mesIdeesSuperieures15));
+        
+        return [
+            'mesIdees' => $mesIdees ?: [],
+            'meilleuresIdees' => $meilleuresIdees ?: [],
+            'mesIdeesSuperieures15' => $mesIdeesSuperieures15 ?: [] // Nouvelles données
+        ];
+    } catch (Exception $e) {
+        error_log("Erreur dans getSalarieStats: " . $e->getMessage());
+        return [
+            'mesIdees' => [],
+            'meilleuresIdees' => [],
+            'mesIdeesSuperieures15' => []
+        ];
     }
-    
+}
+
     private function getEvaluateurStats($userId) {
     try {
         $mesEvaluations = $this->evaluationModel->findByEvaluateur($userId);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Vue dashboard principal - VERSION FINALE COMPLÈTE
+ * Vue dashboard principal - VERSION FINALE COMPLÈTE CORRIGÉE
  * views/admin/dashboard.php
  */
 
@@ -157,18 +157,23 @@ $userRole = $_SESSION['user_role'] ?? '';
                     <i class="fas fa-chart-line fa-2x"></i>
                 </div>
                 <h3 class="mb-1">
-                    <?php 
-                    $totalNotes = 0;
-                    $countNotes = 0;
-                    foreach ($mesEvaluations ?? [] as $eval) {
-                        if ($eval['note']) {
-                            $totalNotes += $eval['note'];
-                            $countNotes++;
-                        }
-                    }
-                    echo $countNotes > 0 ? number_format($totalNotes / $countNotes, 1) : '0';
-                    ?>/20
-                </h3>
+    <?php 
+    $totalNotes = 0;
+    $countNotes = 0;
+    foreach ($mesEvaluations ?? [] as $eval) {
+        if (isset($eval['note']) && $eval['note'] !== null && $eval['note'] !== '') {
+            $totalNotes += floatval($eval['note']);
+            $countNotes++;
+        }
+    }
+    // CORRECTION: Affichage correct de la moyenne
+    if ($countNotes > 0) {
+        echo number_format($totalNotes / $countNotes, 1, '.', '');
+    } else {
+        echo '0.0';
+    }
+    ?>/20
+</h3>
                 <small class="text-muted">Note moyenne donnée</small>
             </div>
         </div>
@@ -339,7 +344,7 @@ $userRole = $_SESSION['user_role'] ?? '';
 
 <?php else: ?>
 <!-- Dashboard Salarié -->
-<div class="row mb-4">
+    <div class="row mb-4">
     <div class="col-md-6">
         <div class="card text-center">
             <div class="card-body">
@@ -359,14 +364,18 @@ $userRole = $_SESSION['user_role'] ?? '';
                 </div>
                 <h3 class="mb-1">
                     <?php
-                    $acceptees = 0;
-                    foreach ($mesIdees ?? [] as $idee) {
-                        if ($idee['statut'] === 'acceptee') $acceptees++;
-                    }
-                    echo $acceptees;
+                    // MODIFICATION: Compter les idées avec note >= 15 au lieu du statut "acceptée"
+                    $ideesSuperieures15 = count($mesIdeesSuperieures15 ?? []);
+                    echo $ideesSuperieures15;
                     ?>
                 </h3>
-                <small class="text-muted">Idées acceptées</small>
+                <small class="text-muted">
+                    Idées d'excellence
+                    <br>
+                    <span class="badge bg-success rounded-pill mt-1" style="font-size: 0.7em;">
+                        <i class="fas fa-star me-1"></i>≥ 15/20
+                    </span>
+                </small>
             </div>
         </div>
     </div>
@@ -437,42 +446,89 @@ $userRole = $_SESSION['user_role'] ?? '';
         </div>
     </div>
     
-    <!-- Meilleures idées -->
-    <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-trophy me-2"></i>Meilleures idées
-                </h5>
-            </div>
-            <div class="card-body">
-                <?php if (!empty($meilleuresIdees)): ?>
-                <div class="list-group list-group-flush">
-                    <?php foreach ($meilleuresIdees as $idee): ?>
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                        <div>
-                            <h6 class="mb-1"><?= e($idee['titre']) ?></h6>
-                            <small class="text-muted">
-                                Par <?= e($idee['utilisateur_prenom'] . ' ' . $idee['utilisateur_nom']) ?>
-                            </small>
-                        </div>
-                        <span class="badge bg-warning">
-                            <?= formatNote($idee['note_moyenne']) ?>
+   <!-- Meilleures idées (Note >= 15) -->
+<div class="col-lg-6">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-trophy me-2"></i>Meilleures idées
+                <small class="text-muted">(Note ≥ 15/20)</small>
+            </h5>
+            <?php if (!empty($meilleuresIdees)): ?>
+            <span class="badge bg-success"><?= count($meilleuresIdees) ?></span>
+            <?php endif; ?>
+        </div>
+        <div class="card-body">
+            <?php if (!empty($meilleuresIdees)): ?>
+            <div class="list-group list-group-flush">
+                <?php foreach ($meilleuresIdees as $idee): ?>
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            <a href="<?= BASE_URL ?>/idees/<?= $idee['id'] ?>" 
+                               class="text-decoration-none">
+                                <?= e($idee['titre']) ?>
+                            </a>
+                        </h6>
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>
+                            Par <?= e($idee['utilisateur_prenom'] . ' ' . $idee['utilisateur_nom']) ?>
+                            
+                            <?php if ($idee['nombre_evaluations'] > 1): ?>
+                            <span class="ms-2">
+                                <i class="fas fa-users me-1"></i>
+                                <?= $idee['nombre_evaluations'] ?> évaluation<?= $idee['nombre_evaluations'] > 1 ? 's' : '' ?>
+                            </span>
+                            <?php endif; ?>
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-<?php 
+                            $note = floatval($idee['note_moyenne']);
+                            if ($note >= 18) echo 'success';
+                            elseif ($note >= 15) echo 'warning';
+                            else echo 'primary';
+                        ?> fs-6">
+                            <i class="fas fa-star me-1"></i>
+                            <?= number_format($idee['note_moyenne'], 1) ?>/20
                         </span>
                     </div>
-                    <?php endforeach; ?>
                 </div>
-                <?php else: ?>
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-trophy fa-3x mb-3 opacity-25"></i>
-                    <p>Aucune idée évaluée</p>
-                </div>
-                <?php endif; ?>
+                <?php endforeach; ?>
             </div>
+            
+            <!-- Message encourageant -->
+            <div class="mt-3 p-3 bg-light rounded">
+                <div class="text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Ces idées excellent avec une note moyenne supérieure à 15/20
+                    </small>
+                </div>
+            </div>
+            
+            <?php else: ?>
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-trophy fa-3x mb-3 opacity-25"></i>
+                <h6>Aucune idée d'excellence pour le moment</h6>
+                <p class="small mb-3">
+                    Les meilleures idées (note ≥ 15/20) apparaîtront ici
+                </p>
+                <div class="small text-muted">
+                    <div class="mb-2">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>
+                        <strong>Astuce :</strong> Soumettez des idées innovantes !
+                    </div>
+                    <div>
+                        <i class="fas fa-star me-2 text-success"></i>
+                        <strong>Objectif :</strong> Viser l'excellence (15+ points)
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
-
 <?php endif; ?>
 
 <style>

@@ -66,43 +66,51 @@ class Evaluation extends BaseModel {
     }
     
     // Créer ou mettre à jour une évaluation
-    public function createOrUpdate($data) {
-        try {
-            if ($this->hasEvaluated($data['idee_id'], $data['evaluateur_id'])) {
-                // Mettre à jour
-                $sql = "UPDATE {$this->table} SET note = :note, commentaire = :commentaire, date_modification = NOW() 
-                        WHERE idee_id = :idee_id AND evaluateur_id = :evaluateur_id";
-                error_log("Evaluation::createOrUpdate - Mise à jour existante");
-            } else {
-                // Créer
-                $sql = "INSERT INTO {$this->table} (idee_id, evaluateur_id, note, commentaire, date_creation) 
-                        VALUES (:idee_id, :evaluateur_id, :note, :commentaire, NOW())";
-                error_log("Evaluation::createOrUpdate - Création nouvelle");
-            }
-            
-            $stmt = $this->db->prepare($sql);
-           $params = [
-    'idee_id' => $data['idee_id'],
-    'evaluateur_id' => $data['evaluateur_id'], 
-    'note' => $data['note'],
-    'commentaire' => $data['commentaire']
-];
-
-error_log("Evaluation - Paramètres pour execute: " . json_encode($params));
-$result = $stmt->execute($params);
-            if ($result) {
-                error_log("Evaluation::createOrUpdate - Succès");
-                $this->updateIdeeNoyenneNote($data['idee_id']);
-            } else {
-                error_log("Evaluation::createOrUpdate - Échec");
-            }
-            
-            return $result;
-        } catch (PDOException $e) {
-            error_log("Erreur createOrUpdate Evaluation: " . $e->getMessage());
-            return false;
+   public function createOrUpdate($data) {
+    try {
+        // DEBUG: Vérifier les données avant insertion
+        error_log("Evaluation::createOrUpdate - Données reçues: " . json_encode($data));
+        
+        if ($this->hasEvaluated($data['idee_id'], $data['evaluateur_id'])) {
+            // Mettre à jour
+            $sql = "UPDATE {$this->table} SET note = :note, commentaire = :commentaire, date_modification = NOW() 
+                    WHERE idee_id = :idee_id AND evaluateur_id = :evaluateur_id";
+            error_log("Evaluation::createOrUpdate - Mise à jour existante");
+        } else {
+            // Créer
+            $sql = "INSERT INTO {$this->table} (idee_id, evaluateur_id, note, commentaire, date_creation) 
+                    VALUES (:idee_id, :evaluateur_id, :note, :commentaire, NOW())";
+            error_log("Evaluation::createOrUpdate - Création nouvelle");
         }
+        
+        $stmt = $this->db->prepare($sql);
+        
+        // CORRECTION: S'assurer que la note est bien un float
+        $params = [
+            'idee_id' => intval($data['idee_id']),
+            'evaluateur_id' => intval($data['evaluateur_id']), 
+            'note' => floatval($data['note']), // IMPORTANT: Conversion explicite
+            'commentaire' => $data['commentaire']
+        ];
+
+        error_log("Evaluation - Paramètres pour execute: " . json_encode($params));
+        $result = $stmt->execute($params);
+        
+        if ($result) {
+            error_log("Evaluation::createOrUpdate - Succès");
+            $this->updateIdeeNoyenneNote($data['idee_id']);
+        } else {
+            error_log("Evaluation::createOrUpdate - Échec");
+            // DEBUG: Afficher l'erreur SQL
+            error_log("Erreur SQL: " . json_encode($stmt->errorInfo()));
+        }
+        
+        return $result;
+    } catch (PDOException $e) {
+        error_log("Erreur createOrUpdate Evaluation: " . $e->getMessage());
+        return false;
     }
+}
     
     // Mettre à jour la note moyenne d'une idée
     private function updateIdeeNoyenneNote($ideeId) {

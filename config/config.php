@@ -134,7 +134,7 @@ function formatDate($date, $format = 'd/m/Y H:i') {
 }
 
 /**
- * Formater une note
+ * Formater une note - VERSION CORRIGÉE
  */
 function formatNote($note) {
     if ($note === null || $note === '') return '-';
@@ -146,8 +146,10 @@ function formatNote($note) {
     $noteFloat = floatval($note);
     error_log("formatNote - Valeur convertie: $noteFloat");
     
-    return number_format($noteFloat, 1) . '/20';
+    // CORRECTION: Ne pas arrondir, juste formater avec 1 décimale
+    return number_format($noteFloat, 1, '.', '') . '/20';
 }
+
 /**
  * Obtenir le label d'un statut
  */

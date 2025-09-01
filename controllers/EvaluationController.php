@@ -122,84 +122,92 @@ class EvaluationController extends BaseController {
     
     // Traiter la soumission d'évaluation
     public function store() {
-        error_log("EvaluationController::store - Début");
-        
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            error_log("EvaluationController::store - Méthode non POST");
-            redirect('/evaluations');
-            return;
-        }
-        
-        $userId = $_SESSION['user_id'];
-        $ideeId = intval($_POST['idee_id'] ?? 0);
-        
-        error_log("EvaluationController::store - User: $userId, Idée: $ideeId");
-        
-        if (!$ideeId) {
-            error_log("EvaluationController::store - ID idée manquant");
-            setFlashMessage('error', 'ID de l\'idée manquant.');
-            redirect('/evaluations/to-evaluate');
-            return;
-        }
-        
-        // Vérifier que l'idée existe
-        $idee = $this->ideeModel->findByIdWithJoins($ideeId);
-        if (!$idee) {
-            error_log("EvaluationController::store - Idée non trouvée: $ideeId");
-            setFlashMessage('error', 'Idée introuvable.');
-            redirect('/evaluations/to-evaluate');
-            return;
-        }
-        
-        // Vérifier que l'évaluateur n'a pas déjà évalué cette idée
-        if ($this->evaluationModel->hasEvaluated($ideeId, $userId)) {
-            error_log("EvaluationController::store - Déjà évaluée");
-            setFlashMessage('error', 'Vous avez déjà évalué cette idée.');
-            redirect('/evaluations');
-            return;
-        }
-        
-        $data = [
-            'idee_id' => $ideeId,
-            'evaluateur_id' => $userId,
-            'note' => floatval($_POST['note'] ?? 0),
-            'commentaire' => sanitize($_POST['commentaire'] ?? '')
-        ];
-        
-        error_log("EvaluationController::store - Note: " . $data['note']);
-        
-        $errors = $this->validateEvaluation($data);
-        
-        if (!empty($errors)) {
-            error_log("EvaluationController::store - Erreurs de validation: " . implode(', ', $errors));
-            $this->loadView('evaluations/form', [
-                'title' => 'Évaluer l\'idée',
-                'idee' => $idee,
-                'evaluation' => $data,
-                'errors' => $errors,
-                'isEdit' => false
-            ], 'user_layout');
-            return;
-        }
-        
-        if ($this->evaluationModel->createOrUpdate($data)) {
-            error_log("EvaluationController::store - Évaluation créée avec succès");
-            
-            // Mettre à jour le statut de l'idée si nécessaire
-            if ($idee['statut'] === 'en_attente') {
-                $this->ideeModel->updateStatut($ideeId, 'en_evaluation');
-                error_log("EvaluationController::store - Statut idée mis à jour");
-            }
-            
-            setFlashMessage('success', 'Évaluation enregistrée avec succès.');
-            redirect('/evaluations');
-        } else {
-            error_log("EvaluationController::store - Erreur lors de la création");
-            setFlashMessage('error', 'Erreur lors de l\'évaluation.');
-            redirect('/evaluations/to-evaluate');
-        }
+    error_log("EvaluationController::store - Début");
+    
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        error_log("EvaluationController::store - Méthode non POST");
+        redirect('/evaluations');
+        return;
     }
     
+    $userId = $_SESSION['user_id'];
+    $ideeId = intval($_POST['idee_id'] ?? 0);
+    
+    error_log("EvaluationController::store - User: $userId, Idée: $ideeId");
+    
+    // DEBUG: Afficher toutes les données POST
+    error_log("EvaluationController::store - POST data: " . json_encode($_POST));
+    
+    if (!$ideeId) {
+        error_log("EvaluationController::store - ID idée manquant");
+        setFlashMessage('error', 'ID de l\'idée manquant.');
+        redirect('/evaluations/to-evaluate');
+        return;
+    }
+    
+    // Vérifier que l'idée existe
+    $idee = $this->ideeModel->findByIdWithJoins($ideeId);
+    if (!$idee) {
+        error_log("EvaluationController::store - Idée non trouvée: $ideeId");
+        setFlashMessage('error', 'Idée introuvable.');
+        redirect('/evaluations/to-evaluate');
+        return;
+    }
+    
+    // Vérifier que l'évaluateur n'a pas déjà évalué cette idée
+    if ($this->evaluationModel->hasEvaluated($ideeId, $userId)) {
+        error_log("EvaluationController::store - Déjà évaluée");
+        setFlashMessage('error', 'Vous avez déjà évalué cette idée.');
+        redirect('/evaluations');
+        return;
+    }
+    
+    // CORRECTION: Traitement correct de la note
+    $noteRaw = $_POST['note'] ?? '';
+    $noteFloat = floatval($noteRaw);
+    
+    error_log("EvaluationController::store - Note brute: '$noteRaw', Note convertie: $noteFloat");
+    
+    $data = [
+        'idee_id' => $ideeId,
+        'evaluateur_id' => $userId,
+        'note' => $noteFloat, // Utiliser la valeur convertie
+        'commentaire' => sanitize($_POST['commentaire'] ?? '')
+    ];
+    
+    error_log("EvaluationController::store - Données finales: " . json_encode($data));
+    
+    $errors = $this->validateEvaluation($data);
+    
+    if (!empty($errors)) {
+        error_log("EvaluationController::store - Erreurs de validation: " . implode(', ', $errors));
+        $this->loadView('evaluations/form', [
+            'title' => 'Évaluer l\'idée',
+            'idee' => $idee,
+            'evaluation' => $data,
+            'errors' => $errors,
+            'isEdit' => false
+        ], 'user_layout');
+        return;
+    }
+    
+    if ($this->evaluationModel->createOrUpdate($data)) {
+        error_log("EvaluationController::store - Évaluation créée avec succès");
+        
+        // Mettre à jour le statut de l'idée si nécessaire
+        if ($idee['statut'] === 'en_attente') {
+            $this->ideeModel->updateStatut($ideeId, 'en_evaluation');
+            error_log("EvaluationController::store - Statut idée mis à jour");
+        }
+        
+        setFlashMessage('success', 'Évaluation enregistrée avec succès.');
+        redirect('/evaluations');
+    } else {
+        error_log("EvaluationController::store - Erreur lors de la création");
+        setFlashMessage('error', 'Erreur lors de l\'évaluation.');
+        redirect('/evaluations/to-evaluate');
+    }
+}
     // Modifier une évaluation existante
     public function edit($ideeId) {
         error_log("EvaluationController::edit - ID: $ideeId");
@@ -242,22 +250,24 @@ class EvaluationController extends BaseController {
     
     // Validation des données d'évaluation
     private function validateEvaluation($data) {
-        $errors = [];
-        
-        if (empty($data['note']) || $data['note'] < 0 || $data['note'] > 20) {
-            $errors[] = "La note doit être comprise entre 0 et 20.";
-        }
-        
-        if (empty($data['idee_id']) || !is_numeric($data['idee_id'])) {
-            $errors[] = "ID de l'idée invalide.";
-        }
-        
-        if (empty($data['evaluateur_id']) || !is_numeric($data['evaluateur_id'])) {
-            $errors[] = "ID de l'évaluateur invalide.";
-        }
-        
-        error_log("EvaluationController::validateEvaluation - " . count($errors) . " erreur(s)");
-        
-        return $errors;
+    $errors = [];
+    
+    // CORRECTION: Vérification plus précise de la note
+    if (!isset($data['note']) || $data['note'] === '' || $data['note'] < 0 || $data['note'] > 20) {
+        $errors[] = "La note doit être comprise entre 0 et 20.";
+        error_log("Validation note échouée - Valeur: " . var_export($data['note'], true));
     }
+    
+    if (empty($data['idee_id']) || !is_numeric($data['idee_id'])) {
+        $errors[] = "ID de l'idée invalide.";
+    }
+    
+    if (empty($data['evaluateur_id']) || !is_numeric($data['evaluateur_id'])) {
+        $errors[] = "ID de l'évaluateur invalide.";
+    }
+    
+    error_log("EvaluationController::validateEvaluation - " . count($errors) . " erreur(s)");
+    
+    return $errors;
+}
 }
