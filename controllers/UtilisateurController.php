@@ -1,6 +1,6 @@
 <?php
 /**
- * Contrôleur des utilisateurs
+ * Contrôleur des utilisateurs - CORRIGÉ
  * controllers/UtilisateurController.php
  */
 
@@ -12,14 +12,15 @@ class UtilisateurController extends BaseController {
         $this->utilisateurModel = new Utilisateur();
     }
     
-    // Liste des utilisateurs
+    // Liste des utilisateurs - CORRECTION DU CHEMIN DE VUE
     public function index() {
         $utilisateurs = $this->utilisateurModel->findAll();
         
-        $this->loadView('utilisateurs/index', [
+        // CORRECTION: Utiliser le bon chemin de vue existante
+        $this->loadView('admin/users', [
             'title' => 'Gestion des utilisateurs',
             'utilisateurs' => $utilisateurs
-        ]);
+        ], 'admin_layout');
     }
     
     // Afficher le formulaire de création
@@ -28,7 +29,7 @@ class UtilisateurController extends BaseController {
             'title' => 'Nouvel utilisateur',
             'action' => 'create',
             'utilisateur' => null
-        ]);
+        ], 'admin_layout');
     }
     
     // Traiter la création
@@ -53,7 +54,7 @@ class UtilisateurController extends BaseController {
                 'action' => 'create',
                 'utilisateur' => $data,
                 'errors' => $errors
-            ]);
+            ], 'admin_layout');
             return;
         }
         
@@ -76,7 +77,7 @@ class UtilisateurController extends BaseController {
             'title' => 'Modifier l\'utilisateur',
             'action' => 'edit',
             'utilisateur' => $utilisateur
-        ]);
+        ], 'admin_layout');
     }
     
     // Traiter la modification
@@ -111,7 +112,7 @@ class UtilisateurController extends BaseController {
                 'action' => 'edit',
                 'utilisateur' => $data,
                 'errors' => $errors
-            ]);
+            ], 'admin_layout');
             return;
         }
         
@@ -153,7 +154,7 @@ class UtilisateurController extends BaseController {
             'prenom' => 'Prénom',
             'email' => 'Email',
             'role' => 'Rôle'
-        ]);
+        ], $data);
         
         // Validation du mot de passe pour la création ou si fourni
         if ($excludeId === null || !empty($data['mot_de_passe'])) {
@@ -179,4 +180,3 @@ class UtilisateurController extends BaseController {
         return $errors;
     }
 }
-?>

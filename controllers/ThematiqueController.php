@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Contrôleur des thématiques
+ * Contrôleur des thématiques - CORRIGÉ
  * controllers/ThematiqueController.php
  */
 
@@ -12,14 +13,15 @@ class ThematiqueController extends BaseController {
         $this->thematiqueModel = new Thematique();
     }
     
-    // Liste des thématiques
+    // Liste des thématiques - CORRECTION DU CHEMIN DE VUE
     public function index() {
         $thematiques = $this->thematiqueModel->findAll();
         
-        $this->loadView('thematiques/index', [
+        // CORRECTION: Utiliser le bon chemin de vue existante
+        $this->loadView('admin/thematiques', [
             'title' => 'Gestion des thématiques',
             'thematiques' => $thematiques
-        ]);
+        ], 'admin_layout');
     }
     
     // Afficher le formulaire de création
@@ -28,7 +30,7 @@ class ThematiqueController extends BaseController {
             'title' => 'Nouvelle thématique',
             'action' => 'create',
             'thematique' => null
-        ]);
+        ], 'admin_layout');
     }
     
     // Traiter la création
@@ -50,7 +52,7 @@ class ThematiqueController extends BaseController {
                 'action' => 'create',
                 'thematique' => $data,
                 'errors' => $errors
-            ]);
+            ], 'admin_layout');
             return;
         }
         
@@ -73,7 +75,7 @@ class ThematiqueController extends BaseController {
             'title' => 'Modifier la thématique',
             'action' => 'edit',
             'thematique' => $thematique
-        ]);
+        ], 'admin_layout');
     }
     
     // Traiter la modification
@@ -101,7 +103,7 @@ class ThematiqueController extends BaseController {
                 'action' => 'edit',
                 'thematique' => $data,
                 'errors' => $errors
-            ]);
+            ], 'admin_layout');
             return;
         }
         
@@ -130,7 +132,7 @@ class ThematiqueController extends BaseController {
         return $this->validateRequired([
             'nom' => 'Nom',
             'description' => 'Description'
-        ]);
+        ], $data);
     }
 }
 ?>

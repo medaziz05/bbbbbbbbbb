@@ -1,6 +1,6 @@
 <?php
 /**
- * Fichier principal - index.php - VERSION CORRIGÉE POUR ÉVALUATIONS
+ * Fichier principal - index.php - VERSION CORRIGÉE POUR ROUTING COMPLET
  */
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -40,7 +40,7 @@ $param = $segments[2] ?? null;
 error_log("ROUTING DEBUG - Path: $path, Controller: $controller, Action: $action, Param: " . ($param ?? 'null'));
 
 try {
-    // GESTION SPÉCIALE DES ROUTES D'ÉVALUATION - CORRIGÉE
+    // GESTION SPÉCIALE DES ROUTES D'ÉVALUATION
     if ($controller === 'evaluations') {
         error_log("ROUTING - Gestion route évaluations: $action");
         
@@ -86,7 +86,7 @@ try {
         }
     }
     
-    // Routes spéciales pour les autres contrôleurs
+    // Routes spéciales pour les autres contrôleurs - VERSION COMPLÈTE
     $routes = [
         // Authentification
         'auth/login' => ['AuthController', 'login'],
@@ -96,12 +96,12 @@ try {
         // Dashboard
         'dashboard' => ['DashboardController', 'index'],
         
-        // Utilisateurs (Admin seulement)
+        // Utilisateurs (Admin seulement) - AJOUT DES ROUTES MANQUANTES
         'utilisateurs' => ['UtilisateurController', 'index'],
         'utilisateurs/create' => ['UtilisateurController', 'create'],
         'utilisateurs/store' => ['UtilisateurController', 'store'],
         
-        // Thématiques (Admin seulement)
+        // Thématiques (Admin seulement) - AJOUT DES ROUTES MANQUANTES
         'thematiques' => ['ThematiqueController', 'index'],
         'thematiques/create' => ['ThematiqueController', 'create'],
         'thematiques/store' => ['ThematiqueController', 'store'],
@@ -142,61 +142,57 @@ try {
             $controllerInstance->$method();
         }
     }
-    // Routes avec paramètres dynamiques
-    elseif (isset($routes[$controller])) {
-        error_log("ROUTING - Route de base trouvée: $controller");
-        $controllerClass = $routes[$controller][0];
-        $method = $routes[$controller][1];
-        
-        $controllerInstance = new $controllerClass();
-        
-        // Méthodes avec ID (edit, update, delete, show)
-        if (in_array($action, ['edit', 'update', 'delete', 'show']) && $param !== null) {
-            $controllerInstance->$action($param);
-        } elseif (in_array($action, ['edit', 'update', 'delete', 'show']) && $action !== 'index') {
-            // ID dans $action pour les routes courtes
-            $id = $action;
-            $controllerInstance->show($id);
-        } else {
-            $controllerInstance->$method();
-        }
-    }
-    // Routes RESTful dynamiques
+    // Routes avec paramètres dynamiques - CORRECTION MAJEURE
     else {
-        error_log("ROUTING - Tentative route RESTful: $controller -> $action");
+        error_log("ROUTING - Tentative route dynamique: $controller -> $action");
         $controllerClass = ucfirst($controller) . 'Controller';
         
         if (class_exists($controllerClass)) {
             error_log("ROUTING - Classe contrôleur trouvée: $controllerClass");
             $controllerInstance = new $controllerClass();
             
-            switch ($action) {
-                case 'edit':
-                case 'update':
-                case 'delete':
-                case 'show':
-                    if ($param !== null) {
-                        $controllerInstance->$action($param);
-                    } else {
-                        error_log("ROUTING ERROR - ID requis pour $action");
-                        throw new Exception("ID requis pour l'action $action");
-                    }
-                    break;
-                    
-                case 'create':
-                case 'store':
-                case 'index':
-                    $controllerInstance->$action();
-                    break;
-                    
-                default:
-                    // Peut-être que $action est un ID pour show
-                    if (is_numeric($action)) {
-                        $controllerInstance->show($action);
-                    } else {
-                        error_log("ROUTING ERROR - Action inconnue: $action");
-                        throw new Exception("Action '$action' non trouvée");
-                    }
+            // Vérifier que la méthode existe
+            if (method_exists($controllerInstance, $action)) {
+                switch ($action) {
+                    case 'edit':
+                    case 'update':
+                    case 'delete':
+                    case 'show':
+                        if ($param !== null && is_numeric($param)) {
+                            $controllerInstance->$action($param);
+                        } else {
+                            error_log("ROUTING ERROR - ID requis pour $action, param reçu: " . ($param ?? 'null'));
+                            throw new Exception("ID requis pour l'action $action");
+                        }
+                        break;
+                        
+                    case 'create':
+                    case 'store':
+                    case 'index':
+                        $controllerInstance->$action();
+                        break;
+                        
+                    default:
+                        // Peut-être que $action est un ID pour show
+                        if (is_numeric($action)) {
+                            if (method_exists($controllerInstance, 'show')) {
+                                $controllerInstance->show($action);
+                            } else {
+                                throw new Exception("Méthode 'show' non trouvée dans $controllerClass");
+                            }
+                        } else {
+                            error_log("ROUTING ERROR - Action inconnue: $action pour $controllerClass");
+                            throw new Exception("Action '$action' non trouvée dans $controllerClass");
+                        }
+                }
+            } else {
+                error_log("ROUTING ERROR - Méthode '$action' non trouvée dans $controllerClass");
+                // Si l'action n'existe pas, peut-être que c'est un ID pour show
+                if (is_numeric($action) && method_exists($controllerInstance, 'show')) {
+                    $controllerInstance->show($action);
+                } else {
+                    throw new Exception("Méthode '$action' non trouvée dans le contrôleur $controllerClass");
+                }
             }
         } else {
             error_log("ROUTING ERROR - Contrôleur non trouvé: $controllerClass");
