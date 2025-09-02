@@ -1,7 +1,7 @@
 <?php
 /**
- * Vue liste des thématiques (Admin seulement)
- * views/thematiques/index.php
+ * Vue liste des thématiques (Admin seulement) - CORRIGÉE
+ * views/admin/thematiques.php
  */
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -49,7 +49,7 @@
                             </span>
                         </td>
                         <td>
-                            <span class="badge bg-info">0</span> <!-- Sera calculé dynamiquement -->
+                            <span class="badge bg-info"><?= $thematique['nombre_idees'] ?? 0 ?></span>
                         </td>
                         <td><?= formatDate($thematique['date_creation']) ?></td>
                         <td>
@@ -58,7 +58,8 @@
                                    class="btn btn-outline-warning" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button onclick="confirmDelete('<?= BASE_URL ?>/thematiques/delete/<?= $thematique['id'] ?>', 'Êtes-vous sûr de vouloir supprimer cette thématique ? Cette action supprimera aussi toutes les idées associées.')" 
+                                <!-- Bouton de suppression activé pour toutes les thématiques -->
+                                <button onclick="confirmDelete('<?= BASE_URL ?>/thematiques/delete/<?= $thematique['id'] ?>', '<?= ($thematique['nombre_idees'] ?? 0) > 0 ? 'Cette thématique contient ' . $thematique['nombre_idees'] . ' idée(s). Êtes-vous sûr de vouloir la supprimer ?' : 'Êtes-vous sûr de vouloir supprimer cette thématique ?' ?>')" 
                                         class="btn btn-outline-danger" title="Supprimer">
                                     <i class="fas fa-trash"></i>
                                 </button>

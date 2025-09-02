@@ -43,17 +43,6 @@ $userRole = $_SESSION['user_role'] ?? '';
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <div class="text-success mb-2">
-                    <i class="fas fa-check-circle fa-2x"></i>
-                </div>
-                <h3 class="mb-1"><?= $stats['acceptees'] ?? 0 ?></h3>
-                <small class="text-muted">Idées acceptées</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
                 <div class="text-info mb-2">
                     <i class="fas fa-users fa-2x"></i>
                 </div>

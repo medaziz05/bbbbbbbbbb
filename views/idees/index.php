@@ -104,11 +104,31 @@
                                 <a href="<?= BASE_URL ?>/idees/<?= $idee['id'] ?>" class="btn btn-outline-primary" title="Voir">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <?php if ($_SESSION['user_role'] === 'admin' || 
-                                         ($_SESSION['user_role'] === 'salarie' && $idee['utilisateur_id'] == $_SESSION['user_id'])): ?>
+                                <?php 
+                                // Logique pour les actions de modification et suppression
+                                $canEdit = false;
+                                $canDelete = false;
+                                
+                                if ($_SESSION['user_role'] === 'admin') {
+                                    // L'admin peut toujours modifier et supprimer
+                                    $canEdit = true;
+                                    $canDelete = true;
+                                } elseif ($_SESSION['user_role'] === 'salarie' && $idee['utilisateur_id'] == $_SESSION['user_id']) {
+                                    // Le salarié peut modifier/supprimer seulement si l'idée est "en attente"
+                                    if ($idee['statut'] === 'en_attente') {
+                                        $canEdit = true;
+                                        $canDelete = true;
+                                    }
+                                }
+                                ?>
+                                
+                                <?php if ($canEdit): ?>
                                 <a href="<?= BASE_URL ?>/idees/edit/<?= $idee['id'] ?>" class="btn btn-outline-warning" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                <?php endif; ?>
+                                
+                                <?php if ($canDelete): ?>
                                 <button onclick="confirmDelete('<?= BASE_URL ?>/idees/delete/<?= $idee['id'] ?>')" 
                                         class="btn btn-outline-danger" title="Supprimer">
                                     <i class="fas fa-trash"></i>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Modèle Thématique
+ * Modèle Thématique - CORRIGÉ
  * models/Thematique.php
  */
 
@@ -12,6 +12,20 @@ class Thematique extends BaseModel {
         return $this->findAll('actif = 1');
     }
     
+    // CORRECTION: Obtenir toutes les thématiques avec le nombre d'idées
+    public function findAllWithIdeeCount() {
+        $sql = "SELECT t.*, 
+                       COUNT(i.id) as nombre_idees
+                FROM thematiques t 
+                LEFT JOIN idees i ON t.id = i.thematique_id
+                GROUP BY t.id
+                ORDER BY t.nom ASC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+    
     // Vérifier si une thématique a des idées associées
     public function hasIdees($id) {
         $sql = "SELECT COUNT(*) as count FROM idees WHERE thematique_id = :id";
@@ -19,6 +33,15 @@ class Thematique extends BaseModel {
         $stmt->execute(['id' => $id]);
         $result = $stmt->fetch();
         return $result['count'] > 0;
+    }
+    
+    // NOUVEAU: Obtenir le nombre d'idées pour une thématique spécifique
+    public function getIdeeCount($id) {
+        $sql = "SELECT COUNT(*) as count FROM idees WHERE thematique_id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id' => $id]);
+        $result = $stmt->fetch();
+        return $result['count'];
     }
     
     // Obtenir les statistiques d'une thématique

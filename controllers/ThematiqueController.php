@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Contrôleur des thématiques - CORRIGÉ
  * controllers/ThematiqueController.php
@@ -13,9 +12,10 @@ class ThematiqueController extends BaseController {
         $this->thematiqueModel = new Thematique();
     }
     
-    // Liste des thématiques - CORRECTION DU CHEMIN DE VUE
+    // Liste des thématiques - CORRECTION COMPLÈTE
     public function index() {
-        $thematiques = $this->thematiqueModel->findAll();
+        // CORRECTION: Utiliser la méthode qui compte les idées
+        $thematiques = $this->thematiqueModel->findAllWithIdeeCount();
         
         // CORRECTION: Utiliser le bon chemin de vue existante
         $this->loadView('admin/thematiques', [

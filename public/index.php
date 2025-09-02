@@ -1,6 +1,6 @@
 <?php
 /**
- * Fichier principal - index.php - VERSION CORRIGÉE POUR ROUTING COMPLET
+ * Fichier principal - index.php - VERSION CORRIGÉE POUR UTILISATEURS
  */
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -86,7 +86,7 @@ try {
         }
     }
     
-    // Routes spéciales pour les autres contrôleurs - VERSION COMPLÈTE
+    // Routes spéciales fixes - VERSION COMPLÈTE CORRIGÉE
     $routes = [
         // Authentification
         'auth/login' => ['AuthController', 'login'],
@@ -96,12 +96,12 @@ try {
         // Dashboard
         'dashboard' => ['DashboardController', 'index'],
         
-        // Utilisateurs (Admin seulement) - AJOUT DES ROUTES MANQUANTES
+        // Utilisateurs (Admin seulement) - ROUTES FIXES
         'utilisateurs' => ['UtilisateurController', 'index'],
         'utilisateurs/create' => ['UtilisateurController', 'create'],
         'utilisateurs/store' => ['UtilisateurController', 'store'],
         
-        // Thématiques (Admin seulement) - AJOUT DES ROUTES MANQUANTES
+        // Thématiques (Admin seulement)
         'thematiques' => ['ThematiqueController', 'index'],
         'thematiques/create' => ['ThematiqueController', 'create'],
         'thematiques/store' => ['ThematiqueController', 'store'],
@@ -145,13 +145,97 @@ try {
     // Routes avec paramètres dynamiques - CORRECTION MAJEURE
     else {
         error_log("ROUTING - Tentative route dynamique: $controller -> $action");
-        $controllerClass = ucfirst($controller) . 'Controller';
+        
+        // CORRECTION: Mapping spécial pour les noms de contrôleurs
+        $controllerMapping = [
+            'utilisateurs' => 'UtilisateurController',
+            'thematiques' => 'ThematiqueController',
+            'idees' => 'IdeeController',
+            'evaluations' => 'EvaluationController'
+        ];
+        
+        if (isset($controllerMapping[$controller])) {
+            $controllerClass = $controllerMapping[$controller];
+        } else {
+            $controllerClass = ucfirst($controller) . 'Controller';
+        }
         
         if (class_exists($controllerClass)) {
             error_log("ROUTING - Classe contrôleur trouvée: $controllerClass");
             $controllerInstance = new $controllerClass();
             
-            // Vérifier que la méthode existe
+            // CORRECTION SPÉCIALE POUR LES UTILISATEURS
+            if ($controller === 'utilisateurs') {
+                error_log("ROUTING - Gestion spéciale utilisateurs: action=$action, param=$param");
+                
+                switch ($action) {
+                    case 'edit':
+                        if ($param !== null && is_numeric($param)) {
+                            error_log("ROUTING - Appel edit utilisateur avec ID: $param");
+                            $controllerInstance->edit($param);
+                        } else {
+                            error_log("ROUTING ERROR - ID requis pour edit utilisateur, param reçu: " . ($param ?? 'null'));
+                            setFlashMessage('error', 'ID utilisateur requis pour la modification');
+                            redirect('/utilisateurs');
+                        }
+                        exit;
+                        
+                    case 'update':
+                        if ($param !== null && is_numeric($param)) {
+                            error_log("ROUTING - Appel update utilisateur avec ID: $param");
+                            $controllerInstance->update($param);
+                        } else {
+                            error_log("ROUTING ERROR - ID requis pour update utilisateur, param reçu: " . ($param ?? 'null'));
+                            setFlashMessage('error', 'ID utilisateur requis pour la mise à jour');
+                            redirect('/utilisateurs');
+                        }
+                        exit;
+                        
+                    case 'delete':
+                        if ($param !== null && is_numeric($param)) {
+                            error_log("ROUTING - Appel delete utilisateur avec ID: $param");
+                            $controllerInstance->delete($param);
+                        } else {
+                            error_log("ROUTING ERROR - ID requis pour delete utilisateur, param reçu: " . ($param ?? 'null'));
+                            setFlashMessage('error', 'ID utilisateur requis pour la suppression');
+                            redirect('/utilisateurs');
+                        }
+                        exit;
+                        
+                    case 'show':
+                        if ($param !== null && is_numeric($param)) {
+                            $controllerInstance->show($param);
+                        } else {
+                            error_log("ROUTING ERROR - ID requis pour show utilisateur");
+                            redirect('/utilisateurs');
+                        }
+                        exit;
+                        
+                    case 'create':
+                    case 'store':
+                    case 'index':
+                        $controllerInstance->$action();
+                        exit;
+                        
+                    default:
+                        // Peut-être que $action est un ID pour show
+                        if (is_numeric($action)) {
+                            if (method_exists($controllerInstance, 'show')) {
+                                $controllerInstance->show($action);
+                            } else {
+                                error_log("ROUTING ERROR - Méthode 'show' non trouvée dans UtilisateurController");
+                                redirect('/utilisateurs');
+                            }
+                        } else {
+                            error_log("ROUTING ERROR - Action utilisateur inconnue: $action");
+                            setFlashMessage('error', "Action '$action' non reconnue");
+                            redirect('/utilisateurs');
+                        }
+                        exit;
+                }
+            }
+            
+            // Vérifier que la méthode existe pour les autres contrôleurs
             if (method_exists($controllerInstance, $action)) {
                 switch ($action) {
                     case 'edit':
